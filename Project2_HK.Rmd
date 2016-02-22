@@ -1,0 +1,11 @@
+---
+title: "EDAV Project 2"
+output: html_document
+---
+  
+```{r}
+library(scatterplot3d)
+library(ggplot2)
+library(reshape)
+
+data <- read.csv(file="~/Desktop/GlobalFloodsRecord 2.csv")
