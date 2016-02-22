@@ -8,4 +8,12 @@ library(scatterplot3d)
 library(ggplot2)
 library(reshape)
 
-data <- read.csv(file="~/Desktop/GlobalFloodsRecord 2.csv")
+data <- read.csv(file="~/Desktop/Project2/EDAV_project_2/GlobalFloodsRecord_HK.csv")
+data1 <- cbind(data$duration,data$affected,data$died)
+
+pc1 <- princomp(data1, cor = TRUE, scores = TRUE)
+summary(pc1)
+plot(pc1,type = "l")
+biplot(pc1)
+
+scatterplot3d(data$duration,data$affected,data$died)
