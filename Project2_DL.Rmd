@@ -1,0 +1,26 @@
+---
+title: "EDAV Project 2"
+output: html_document
+---
+  
+```{r}
+library(scatterplot3d)
+library(ggplot2)
+library(reshape)
+library(RNetCDF)
+
+
+setwd("~/Google Drive/Data Science/Courses/Spring 2016/Exploratory Data Analysis and Visualization/Assignments/EDAV_project_2/")
+data <- read.csv(file="./GlobalFloodsRecord_HK.csv")
+data1 <- cbind(data$duration,data$affected,data$died)
+data.full <- read.csv(file="./data/datasets/GlobalFloodsRecord.csv")
+file.nc <- open.nc("./data/datasets/NOAA_Daily_phi_500mb.nc")
+data.nc <- read.nc(file.nc)
+
+pc1 <- princomp(data1, cor = TRUE, scores = TRUE)
+summary(pc1)
+plot(pc1,type = "l")
+biplot(pc1)
+
+scatterplot3d(data$duration,data$affected,data$died)
+```
