@@ -251,9 +251,8 @@ for(i in 0:frames) {
     scale_colour_gradient(low="yellow", high="red", 
                           guide = "colourbar", 
                           name = "Flood Duration \nby Days in \nthe country") +
-    theme(legend.position="none") 
+    theme(legend.position="none") + coord_fixed() + 
     ggtitle(paste0("Floods over time: Year ", year)) + labs(x="Longitude", y="Latitude") 
-  a <- a + coord_fixed()
   print(a)
   ani.pause()
 
@@ -262,7 +261,7 @@ for(i in 0:frames) {
   #  ggsave(file=paste0("images/",(name[j])), scale = 0.4)
   #}
   
-}}, img.name = "unif_plot", imgdir = "unif_dir", htmlfile = "random.html", 
-autobrowse = FALSE, title = "Demo of 20 uniform random numbers", 
-description = "")  
+}}, img.name = "yearly_floods", imgdir = "img", htmlfile = "animations/yearly_floods/yearly_floods.html", ani.width = 1200, ani.height = 700, ani.options = c('verbose', FALSE),
+autobrowse = FALSE, title = "Yearly Floods since 1985", 
+description = "Floods in the world, per year")  
 ```
