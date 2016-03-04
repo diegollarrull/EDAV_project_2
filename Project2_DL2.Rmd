@@ -2,6 +2,8 @@
 title: "EDAV Project 2"
 output: html_document
 ---
+
+
   
 ```{r}
 library(scatterplot3d)
@@ -13,9 +15,10 @@ library(ggmap)
 library(dplyr)
 library(maps)
 library(zoo)
+library(animation)
 
 #have to manually set working directory here
-setwd("~/Google Drive/Data Science/Courses/Spring 2016/Exploratory Data Analysis and Visualization/Assignments/EDAV_project_2/")
+setwd("~/Documents/workspace/EDAV_project_2")
 data <- read.csv(file="./GlobalFloodsRecord_HK.csv")
 data1 <- cbind(data$duration,data$affected,data$died)
 
@@ -200,10 +203,10 @@ f <- function(x) {
     paste0("200",x)
   }
   else if (x <= 16) {
-     paste0("20", x)
+    paste0("20", x)
   }
   else{
-     paste0("19", x)
+    paste0("19", x)
   }
 }
 began.year = as.numeric(lapply(as.numeric(began.year), f))
@@ -221,45 +224,45 @@ frames = (max(ended.year) - min(began.year))
 
 #frames = 0
 
+saveHTML({
+  
+
 for(i in 0:frames) {
- 
+  
   name = c()
   
- for (j in 1:12){
-   # creating a name for each plot file with leading zeros
-   if (i < 10) {name[j] = paste('000',i,'_', j, 'plot.png',sep='')}
-   if (i < 100 && i >= 10) {name[j] = paste('00',i,'_', j,'plot.png', sep='')}
-   if (i >= 100) {name[j] = paste('0',i,'_', j,'plot.png', sep='')}
- }
-  
- year = 1985 + i
- print(year)
- data = timeline[which((timeline$began <= year) & (timeline$ended >= year)),]
- 
- ggplot(worldmap,aes(long, lat)) +
-  geom_polygon(aes(group=group), fill="white",color="gray40",size=0.2) +
-  geom_jitter(data=data, 
-              aes(data$Centroid.X, data$Centroid.Y, size=data$Dead, 
-                  color=data$Magnitude..M...), alpha=1) + 
-  scale_size(name = "Number of \nDeath in \nthe country") +
-  scale_colour_gradient(low="yellow", high="red", 
-                        guide = "colourbar", 
-                        name = "Flood Duration \nby Days in \nthe country") +
-  theme(legend.position="none") +
-  ggtitle(paste0("Floods over time: Year ", year)) + labs(x="Longitude", y="Latitude") 
- 
   for (j in 1:12){
-    print(name[j])
-    ggsave(file=paste0("pngs/",(name[j])))
+    # creating a name for each plot file with leading zeros
+    if (i < 10) {name[j] = paste('000',i,'_', j, 'plot.gif',sep='')}
+    if (i < 100 && i >= 10) {name[j] = paste('00',i,'_', j,'plot.gif', sep='')}
+    if (i >= 100) {name[j] = paste('0',i,'_', j,'plot.gif', sep='')}
   }
- 
-}
+  
+  year = 1985 + i
+  print(year)
+  data = timeline[which((timeline$began <= year) & (timeline$ended >= year)),]
+  
+  a <- ggplot(worldmap,aes(long, lat)) +
+    geom_polygon(aes(group=group), fill="white",color="gray40",size=0.2) +
+    geom_jitter(data=data, 
+                aes(data$Centroid.X, data$Centroid.Y, size=data$Dead, 
+                    color=data$Magnitude..M...), alpha=1) + 
+    scale_size(name = "Number of \nDeath in \nthe country") +
+    scale_colour_gradient(low="yellow", high="red", 
+                          guide = "colourbar", 
+                          name = "Flood Duration \nby Days in \nthe country") +
+    theme(legend.position="none") 
+    ggtitle(paste0("Floods over time: Year ", year)) + labs(x="Longitude", y="Latitude") 
+  a <- a + coord_fixed()
+  print(a)
+  ani.pause()
 
-reduce_command <- 'mogrify -resize 1138x600 *.png'
-convert_command <- 'convert *.png -delay 100x100 -loop 0 animation.gif'
-setwd("~/Google Drive/Data Science/Courses/Spring 2016/Exploratory Data Analysis and Visualization/Assignments/EDAV_project_2/pngs")
-system(reduce_command)
-system(convert_command)
-setwd("~/Google Drive/Data Science/Courses/Spring 2016/Exploratory Data Analysis and Visualization/Assignments/EDAV_project_2/")
-
+  #for (j in 1:12){
+  #  print(name[j])
+  #  ggsave(file=paste0("images/",(name[j])), scale = 0.4)
+  #}
+  
+}}, img.name = "unif_plot", imgdir = "unif_dir", htmlfile = "random.html", 
+autobrowse = FALSE, title = "Demo of 20 uniform random numbers", 
+description = "")  
 ```
