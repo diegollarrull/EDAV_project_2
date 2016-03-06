@@ -1,0 +1,54 @@
+---
+title: "project2-continent frequency plot"
+author: "Shengzhong Yin"
+output: html_document
+---
+
+I draw a graph base on the frequency for every year of each continent.
+```{r, warning=FALSE, message=FALSE, echo=FALSE}
+data = read.csv("GlobalFloodsRecord_cleaned.csv")
+attach(data)
+
+# set system locale to enable as.Date function
+lc = Sys.setlocale("LC_TIME", "C")
+
+# transform the date column (by Began) to standard form 
+# then take year and month only
+year <- as.numeric(format(as.Date(as.character((Began)), "%d-%b-%y"), "%Y"))
+# transform longitude and latitude to numeric
+longitude <- as.numeric(levels(Centroid.X))[Centroid.X]
+latitude <- as.numeric(levels(Centroid.Y))[Centroid.Y]
+# create the new dataset for use
+newData <- data.frame(year, longitude, latitude) 
+newData = na.omit(newData)
+
+library(sp)
+library(rworldmap)
+# The single argument to this function, points, is a data.frame in which:
+#   - column 1 contains the longitude in degrees
+#   - column 2 contains the latitude in degrees
+coords2continent = function(points) {  
+  countriesSP <- getMap(resolution='low')
+  #countriesSP <- getMap(resolution='high') 
+  # you could use high res map from rworldxtra if you were concerned about detail
+  
+  # converting points to a SpatialPoints object
+  # setting CRS directly to that from rworldmap
+  pointsSP = SpatialPoints(points, proj4string=CRS(proj4string(countriesSP)))  
+  
+  # use 'over' to get indices of the Polygons object containing each point 
+  indices = over(pointsSP, countriesSP)
+  
+  #indices$continent   # returns the continent (6 continent model)
+  indices$REGION   # returns the continent (7 continent model)
+  #indices$ADMIN   # returns country name
+}
+
+# generate continent
+continent = coords2continent(newData[, 2:3])
+newData = na.omit(data.frame(newData, continent))
+
+library(ggplot2)
+qplot(year, data = newData, geom = "freqpoly", binwidth = 1, colour = continent)
+```
+
