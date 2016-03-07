@@ -1,0 +1,325 @@
+<!doctype html>
+<html>
+<head>
+<script type="text/javascript" async 
+src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+<!-- SYNTAX HIGHLIGHTING CLASSES  -->
+<style type="text/css">
+.author {display:block;text-align:center;font-size:16px;margin-bottom:3px;}
+.date {display:block;text-align:center;font-size:12px;margin-bottom:3px;}
+.center, #center {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    -webkit-box-shadow: 0px 0px 2px rgba( 0, 0, 0, 0.5 );
+    -moz-box-shadow: 0px 0px 2px rgba( 0, 0, 0, 0.5 );
+    box-shadow: 0px 0px 2px rgba( 0, 0, 0, 0.5 );
+
+    padding: 0px;
+    border-width: 0px;
+    border-style: solid;
+    cursor:-webkit-zoom-in;
+    cursor:-moz-zoom-in;
+    }
+
+pagebreak {
+        page-break-before: always;
+        }
+
+.pagebreak, #pagebreak {
+        page-break-before: always;
+        }
+
+td > p {padding:0; margin:0;}
+
+
+
+
+header {
+        font-size:28px;
+        padding-bottom:5px; 
+        margin:0;
+        padding-top:150px; 
+        font-family: ;
+        background-color:white; 
+        text-align:center;
+        display:block;
+        }
+
+table {
+        border-collapse: collapse;
+        border-bottom:1px solid black;
+        padding:5px;
+        margin-top:5px;
+
+}
+.tble {
+        display:block;
+        margin-top: 10px;
+        margin-bottom: 0px;
+        margin-bottom: 0px;
+}
+
+.tblecenter {
+        display:block;
+        margin-top: 10px;
+        margin-bottom: 0px;
+        margin-bottom: 0px;
+        text-align:center;
+}
+
+span.tblecenter + table, span.tble + table, span.tble + img {
+        margin-top: 2px;
+}
+
+th {
+border-bottom:1px solid black;
+border-top:1px solid black;
+padding-right:20px;
+}
+
+td {
+padding-right:20px;
+}
+
+</style>
+</head>
+<body>
+<h1 id="edav-project-2-regression-with-principal-components">EDAV Project 2: Regression with Principal Components</h1>
+<h2 id="aim-visualize-relationship-between-flood-characteristics-and-number-of-people-displaced">Aim: Visualize relationship between flood characteristics and number of people displaced</h2>
+<h3 id="visualize-distribution-of-variables">1. Visualize distribution of variables</h3>
+<ul>
+<li>Magnitude:</li>
+</ul>
+<div class="figure">
+<img src="./Histogram_magnitude.png" />
+
+</div>
+<ul>
+<li>Duration:</li>
+</ul>
+<div class="figure">
+<img src="./Histogram_duration.png" />
+
+</div>
+<ul>
+<li>Affected area:</li>
+</ul>
+<div class="figure">
+<img src="./Histogram_affected.png" />
+
+</div>
+<ul>
+<li>Number displaced:</li>
+</ul>
+<div class="figure">
+<img src="./Histogram_displaced.png" />
+
+</div>
+<h3 id="center-and-scale">2. Center and scale</h3>
+<p>Except for magnitude, other variables are not normally distributed, so log-transform them and t hen center and scale all variables.</p>
+<h3 id="linear-regression">3. Linear regression</h3>
+<p>Perform multiple linear regression with &quot;displaced&quot; as dependent variable and other three varia bles as independent variables.</p>
+<p>This model seems to explain ~20% of number of people displaced.</p>
+<pre><code>     1 .  regress std_log_displaced std_magnitude std_log_duration std_log_affected
+      
+            Source |       SS       df       MS              Number of obs =    3034
+      -------------+------------------------------           F(  3,  3030) =  238.20
+             Model |  578.799987     3  192.933329           Prob &gt; F      =  0.0000
+          Residual |  2454.19999  3030  .809966995           R-squared     =  0.1908
+      -------------+------------------------------           Adj R-squared =  0.1900
+             Total |  3032.99998  3033  .999999994           Root MSE      =  .89998
+      
+      ----------------------------------------------------------------------------------
+      std_log_displa~d |      Coef.   Std. Err.      t    P&gt;|t|     [95% Conf. Interval]
+      -----------------+----------------------------------------------------------------
+         std_magnitude |   .2641184   .1101812     2.40   0.017     .0480809    .4801559
+      std_log_duration |   .2125168   .0464031     4.58   0.000     .1215321    .3035015
+      std_log_affected |  -.0117362   .0844968    -0.14   0.890    -.1774131    .1539406
+                 _cons |  -.0675865   .0165535    -4.08   0.000    -.1000437   -.0351292
+      ----------------------------------------------------------------------------------
+      
+      
+      </code></pre>
+<p>Remove &quot;affected&quot; since not significantly associated with dependent variable.</p>
+<p>Model R2 remains unchanged.</p>
+<pre><code>     2 .  regress std_log_displaced std_magnitude std_log_duration
+      
+            Source |       SS       df       MS              Number of obs =    3034
+      -------------+------------------------------           F(  2,  3031) =  357.40
+             Model |  578.784361     2   289.39218           Prob &gt; F      =  0.0000
+          Residual |  2454.21562  3031  .809704922           R-squared     =  0.1908
+      -------------+------------------------------           Adj R-squared =  0.1903
+             Total |  3032.99998  3033  .999999994           Root MSE      =  .89984
+      
+      ----------------------------------------------------------------------------------
+      std_log_displa~d |      Coef.   Std. Err.      t    P&gt;|t|     [95% Conf. Interval]
+      -----------------+----------------------------------------------------------------
+         std_magnitude |   .2491953   .0244173    10.21   0.000     .2013191    .2970716
+      std_log_duration |   .2180322   .0240046     9.08   0.000     .1709653    .2650992
+                 _cons |  -.0675127   .0165423    -4.08   0.000    -.0999479   -.0350774
+      ----------------------------------------------------------------------------------
+      
+      
+      
+      </code></pre>
+<p>Check assumptions of linear regression:</p>
+<ul>
+<li>Assumption of normality of residuals appears satisfied.</li>
+</ul>
+<div class="figure">
+<img src="./Histogram_kernel_density.png" />
+
+</div>
+<ul>
+<li>Assumption of homoscedasticity of residuals appears satisfied.</li>
+</ul>
+<div class="figure">
+<img src="./Homoscedasticity.png" />
+
+</div>
+<ul>
+<li><p>No evidence of significant collinearity (VIF &lt;10).</p>
+<pre><code> 3 .  vif
+
+      Variable |       VIF       1/VIF  
+  -------------+----------------------
+  std_log_du~n |      2.21    0.452957
+  std_magnit~e |      2.21    0.452957
+  -------------+----------------------
+      Mean VIF |      2.21</code></pre></li>
+<li><p>Assumption of linearity appears satisfied.</p></li>
+</ul>
+<div class="figure">
+<img src="./Linearity_magnitude.png" />
+
+</div>
+<div class="figure">
+<img src="./Linearity_duration.png" />
+
+</div>
+<h3 id="perform-principal-components-analysis-on-magnitude-and-duration">4. Perform principal components analysis on &quot;magnitude&quot; and &quot;duration&quot;</h3>
+<p>Estimate principal components.</p>
+<pre><code>     4 .  pca std_magnitude std_log_duration
+      
+      Principal components/correlation                  Number of obs    =      4312
+                                                        Number of comp.  =         2
+                                                        Trace            =         2
+          Rotation: (unrotated = principal)             Rho              =    1.0000
+      
+          --------------------------------------------------------------------------
+             Component |   Eigenvalue   Difference         Proportion   Cumulative
+          -------------+------------------------------------------------------------
+                 Comp1 |      1.73842      1.47684             0.8692       0.8692
+                 Comp2 |      .261578            .             0.1308       1.0000
+          --------------------------------------------------------------------------
+      
+      Principal components (eigenvectors) 
+      
+          ------------------------------------------------
+              Variable |    Comp1     Comp2 | Unexplained 
+          -------------+--------------------+-------------
+          std_magnit~e |   0.7071    0.7071 |           0 
+          std_log_du~n |   0.7071   -0.7071 |           0 
+          ------------------------------------------------
+      
+      </code></pre>
+<p>Component 1 explains ~87% of variance, so compute score of that component (pc1) and regress on that alone.</p>
+<p>As seen, model R2 is similar to earlier model with separate terms for &quot;magnitude&quot; and &quot;duration &quot;.</p>
+<pre><code>     5 .  regress std_log_displaced pc1
+      
+            Source |       SS       df       MS              Number of obs =    3034
+      -------------+------------------------------           F(  1,  3032) =  714.48
+             Model |   578.41338     1   578.41338           Prob &gt; F      =  0.0000
+          Residual |   2454.5866  3032  .809560224           R-squared     =  0.1907
+      -------------+------------------------------           Adj R-squared =  0.1904
+             Total |  3032.99998  3033  .999999994           Root MSE      =  .89976
+      
+      ------------------------------------------------------------------------------
+      std_log_di~d |      Coef.   Std. Err.      t    P&gt;|t|     [95% Conf. Interval]
+      -------------+----------------------------------------------------------------
+               pc1 |   .3297514   .0123365    26.73   0.000     .3055626    .3539401
+             _cons |  -.0676347   .0165297    -4.09   0.000    -.1000453   -.0352241
+      ------------------------------------------------------------------------------
+      
+      
+      </code></pre>
+<p>Regression model with &quot;pc1&quot; appears to have superior R2 to regression models with &quot;duration&quot; al one or &quot;magnitude&quot; alone.</p>
+<pre><code>     6 .  regress std_log_displaced std_log_duration
+      
+            Source |       SS       df       MS              Number of obs =    3034
+      -------------+------------------------------           F(  1,  3032) =  590.56
+             Model |  494.448928     1  494.448928           Prob &gt; F      =  0.0000
+          Residual |  2538.55105  3032  .837252986           R-squared     =  0.1630
+      -------------+------------------------------           Adj R-squared =  0.1627
+             Total |  3032.99998  3033  .999999994           Root MSE      =  .91502
+      
+      ----------------------------------------------------------------------------------
+      std_log_displa~d |      Coef.   Std. Err.      t    P&gt;|t|     [95% Conf. Interval]
+      -----------------+----------------------------------------------------------------
+      std_log_duration |   .3992275   .0164281    24.30   0.000     .3670161    .4314389
+                 _cons |   -.063597   .0168168    -3.78   0.000    -.0965705   -.0306235
+      ----------------------------------------------------------------------------------
+      
+      
+     7 . regress std_log_displaced std_magnitude
+      
+            Source |       SS       df       MS              Number of obs =    3034
+      -------------+------------------------------           F(  1,  3032) =  615.76
+             Model |  511.983959     1  511.983959           Prob &gt; F      =  0.0000
+          Residual |  2521.01602  3032  .831469664           R-squared     =  0.1688
+      -------------+------------------------------           Adj R-squared =  0.1685
+             Total |  3032.99998  3033  .999999994           Root MSE      =  .91185
+      
+      -------------------------------------------------------------------------------
+      std_log_dis~d |      Coef.   Std. Err.      t    P&gt;|t|     [95% Conf. Interval]
+      --------------+----------------------------------------------------------------
+      std_magnitude |   .4132298   .0166528    24.81   0.000     .3805779    .4458817
+              _cons |  -.0543578   .0166988    -3.26   0.001    -.0870999   -.0216158
+      -------------------------------------------------------------------------------
+      
+      
+      
+      </code></pre>
+<p>Check assumptions of linear regression for model with principal component alone:</p>
+<ul>
+<li>Assumption of normality of residuals appears satisfied.</li>
+</ul>
+<div class="figure">
+<img src="./Histogram_kernel_density_2.png" />
+
+</div>
+<ul>
+<li>Assumption of homoscedasticity of residuals appears satisfied.</li>
+</ul>
+<div class="figure">
+<img src="./Homoscedasticity_2.png" />
+
+</div>
+<ul>
+<li><p>No evidence of significant collinearity (VIF &lt;10).</p>
+<pre><code> 8 .  vif
+
+      Variable |       VIF       1/VIF  
+  -------------+----------------------
+           pc1 |      1.00    1.000000
+  -------------+----------------------
+      Mean VIF |      1.00</code></pre></li>
+<li><p>Assumption of linearity appears satisfied.</p></li>
+</ul>
+<div class="figure">
+<img src="./Linearity_pc1.png" />
+
+</div>
+<h3 id="visually-assess-relationship-between-multiple-flood-characteristics-and-displaced">5. Visually assess relationship between multiple flood characteristics and # displaced</h3>
+<p>Such a visualization would be difficult to perform with traditional linear regression in the pr esence of multiple independent variables.</p>
+<div class="figure">
+<img src="./Scatter.png" />
+
+</div>
+<h3 id="summmary">6. Summmary</h3>
+<p>Principal components analysis allowed dimension reduction to one dimension, thereby allowing di rect visualization.</p>
+<p>Prediction using one principal component was superior to regression limited to one traditional independent variable.</p>
+</body>
+</html>

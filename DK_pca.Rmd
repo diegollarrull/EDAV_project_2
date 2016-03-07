@@ -1,0 +1,166 @@
+---
+title: "EDAV Project 2 - PCA Analysis"
+author: "Team Noname"
+date: "March 7, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+library(scatterplot3d)
+library(ggplot2)
+library(reshape)
+library(RNetCDF)
+library(gdata)
+library(ggmap)
+library(dplyr)
+library(maps)
+library(zoo)
+library(animation)
+
+#Flood record data from Dartmouth Flood Observatory (GlobalFloodsRecord.xls)
+global.flood = read.xls("data/GlobalFloodsRecordModified.xls",header = TRUE)
+global.flood$Country=as.character(global.flood$Country)
+
+#set working directory to the folder with data
+#Climate data (NOAA_Daily_phi_500mb.nc)
+geopot.height = open.nc("data/NOAA_Daily_phi_500mb.nc")
+daily.geopot.height = read.nc(geopot.height)
+close.nc(geopot.height)
+```
+
+## Principal component analysis on the floods in the UK during 1990
+
+We decided to subset the data and focus our attention in 5 flood events that occurred in the United Kingdom during 1990. We came up with these events after slicing the Global Floods data over time and generating an animation as allowed us to perfectly tackle big and isolated flood events over time.
+
+```{r cars}
+## Extraction of phi data
+
+uk.floods = global.flood[c(3837,3845,3856,3924,3930),]
+```
+
+## Transforming the data
+
+Once the entries for the UK floods in 1990 have been located in the NOAA daily phi data, global flood records dates are transformed so that the two tables can be correctly related
+
+```{r transformation}
+uk.floods$Began <- as.numeric(as.POSIXct(as.Date(uk.floods$Began, "%d-%b-%y"), origin="1948-01-01")) %/% (24*60*60) 
+uk.floods$Ended <- as.numeric(as.POSIXct(as.Date(uk.floods$Ended, "%d-%b-%y"), origin="1948-01-01")) %/% (24*60*60) 
+uk.floods[,c("Began","Ended")]
+```
+
+Using these intervals we proceeded to split the phi data into:
+
+* All longitudes
+* Latitudes from 45ºN to 60ºN
+* Days ranging from 30 days before the start date to 30 days after the end date
+
+
+```{r}
+uk.floods.x     <- which(daily.geopot.height$X > -1)
+uk.floods.y     <- which(daily.geopot.height$Y >= 45 & daily.geopot.height$Y <= 60)
+
+interval <- function(x,y) {
+  c(x - 30, y + 30)
+}
+
+uk.floods.t.1 <- interval(7663,7666)
+uk.floods.t.2 <- interval(7605,7607)
+uk.floods.t.3 <- interval(7583,7584)
+uk.floods.t.4 <- interval(7361,7363)
+uk.floods.t.5 <- interval(7330,7345)
+
+
+generate_data <- function(x,y,range){
+
+  dims <- c(length(x) * length(y), range[2]-range[1]+1)
+  size <- length(x) * length(y) * (range[2]-range[1]+1)
+  data <- array(1:size, dim=dims)
+  j <- 1
+  for (i in range[1]:range[2]){
+    data[,j] <- as.vector(t(daily.geopot.height$phi[x, y, i]))
+    j <- j + 1
+  }
+  return(data)
+}
+
+uk.floods.phi.1  <- generate_data(uk.floods.x, uk.floods.y, uk.floods.t.1)
+uk.floods.phi.2  <- generate_data(uk.floods.x, uk.floods.y, uk.floods.t.2)
+uk.floods.phi.3  <- generate_data(uk.floods.x, uk.floods.y, uk.floods.t.3)
+uk.floods.phi.4  <- generate_data(uk.floods.x, uk.floods.y, uk.floods.t.4)
+uk.floods.phi.5  <- generate_data(uk.floods.x, uk.floods.y, uk.floods.t.5)
+
+```
+
+Once we have the slices for each flood event, we ran PCA on them:
+
+```{r}
+uk.floods.pca.1 <- princomp(uk.floods.phi.1, cor = TRUE, scores = TRUE)
+uk.floods.pca.2 <- princomp(uk.floods.phi.2, cor = TRUE, scores = TRUE)
+uk.floods.pca.3 <- princomp(uk.floods.phi.3, cor = TRUE, scores = TRUE)
+uk.floods.pca.4 <- princomp(uk.floods.phi.4, cor = TRUE, scores = TRUE)
+uk.floods.pca.5 <- princomp(uk.floods.phi.5, cor = TRUE, scores = TRUE)
+
+
+summary(uk.floods.pca.1)
+plot(uk.floods.pca.1,type = "l")
+biplot(uk.floods.pca.1)
+
+summary(uk.floods.pca.2)
+plot(uk.floods.pca.2,type = "l")
+biplot(uk.floods.pca.2)
+
+summary(uk.floods.pca.3)
+plot(uk.floods.pca.3,type = "l")
+biplot(uk.floods.pca.3)
+
+summary(uk.floods.pca.4)
+plot(uk.floods.pca.4,type = "l")
+biplot(uk.floods.pca.4)
+
+summary(uk.floods.pca.5)
+plot(uk.floods.pca.5,type = "l")
+biplot(uk.floods.pca.5)
+```
+
+The same analysis after standarization of the data yields: 
+
+```{r}
+uk.floods.phi.1.scaled <- scale(uk.floods.phi.1)
+uk.floods.phi.2.scaled <- scale(uk.floods.phi.2)
+uk.floods.phi.3.scaled <- scale(uk.floods.phi.3)
+uk.floods.phi.4.scaled <- scale(uk.floods.phi.4)
+uk.floods.phi.5.scaled <- scale(uk.floods.phi.5)
+
+	
+colMeans(uk.floods.phi.1.scaled)  # faster version of apply(scaled.dat, 2, mean)
+apply(uk.floods.phi.1.scaled, 2, sd)
+
+
+uk.floods.pca.1.scaled <- princomp(uk.floods.phi.1.scaled , cor = TRUE, scores = TRUE)
+uk.floods.pca.2.scaled <- princomp(uk.floods.phi.2.scaled , cor = TRUE, scores = TRUE)
+uk.floods.pca.3.scaled <- princomp(uk.floods.phi.3.scaled , cor = TRUE, scores = TRUE)
+uk.floods.pca.4.scaled <- princomp(uk.floods.phi.4.scaled , cor = TRUE, scores = TRUE)
+uk.floods.pca.5.scaled <- princomp(uk.floods.phi.5.scaled , cor = TRUE, scores = TRUE)
+
+summary(uk.floods.pca.1.scaled)
+plot(uk.floods.pca.1.scaled,type = "l")
+biplot(uk.floods.pca.1.scaled)
+
+summary(uk.floods.pca.2.scaled)
+plot(uk.floods.pca.2.scaled,type = "l")
+biplot(uk.floods.pca.2.scaled)
+
+summary(uk.floods.pca.3.scaled)
+plot(uk.floods.pca.3.scaled,type = "l")
+biplot(uk.floods.pca.3.scaled)
+
+summary(uk.floods.pca.4.scaled)
+plot(uk.floods.pca.4.scaled,type = "l")
+biplot(uk.floods.pca.4.scaled)
+
+summary(uk.floods.pca.5.scaled)
+plot(uk.floods.pca.5.scaled,type = "l")
+biplot(uk.floods.pca.5.scaled)
+```
+
