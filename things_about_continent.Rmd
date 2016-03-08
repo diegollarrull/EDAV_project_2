@@ -1,0 +1,89 @@
+---
+title: "project2-continent frequency plot"
+author: "Shengzhong Yin"
+output: html_document
+---
+
+I draw a graph base on the frequency for every year of each continent.
+```{r, warning=FALSE, message=FALSE, echo=FALSE}
+data = read.csv("GlobalFloodsRecord_cleaned.csv")
+attach(data)
+
+# set system locale to enable as.Date function
+lc = Sys.setlocale("LC_TIME", "C")
+
+# transform the date column (by Began) to standard form 
+# then take year and month only
+year <- format(as.Date(as.character((Began)), "%d-%b-%y"), "%Y")
+# transform longitude and latitude to numeric
+longitude <- as.numeric(as.character(Centroid.X))
+latitude <- as.numeric(as.character(Centroid.Y))
+# give more reasonable names for other columns
+duration <- as.numeric(as.character(Duration.in.Days))
+death <- as.numeric(as.character(Dead))
+severity <- as.numeric(as.character(Severity..))
+affectedArea <- as.numeric(as.character(Affected.sq.km))
+magnitude <- as.numeric(as.character(Magnitude..M...))
+# create the new dataset for use
+newData <- data.frame(year, longitude, latitude, duration, 
+                      death, severity, affectedArea, magnitude) 
+newData = na.omit(newData)
+
+library(sp)
+library(rworldmap)
+# The single argument to this function, points, is a data.frame in which:
+#   - column 1 contains the longitude in degrees
+#   - column 2 contains the latitude in degrees
+coords2continent = function(points) {  
+  countriesSP <- getMap(resolution='low')
+  #countriesSP <- getMap(resolution='high') 
+  # you could use high res map from rworldxtra if you were concerned about detail
+  
+  # converting points to a SpatialPoints object
+  # setting CRS directly to that from rworldmap
+  pointsSP = SpatialPoints(points, proj4string=CRS(proj4string(countriesSP)))  
+  
+  # use 'over' to get indices of the Polygons object containing each point 
+  indices = over(pointsSP, countriesSP)
+  
+  #indices$continent   # returns the continent (6 continent model)
+  indices$REGION   # returns the continent (7 continent model)
+  #indices$ADMIN   # returns country name
+}
+
+# generate continent
+continent = coords2continent(newData[, 2:3])
+newData = na.omit(data.frame(newData, continent))
+
+library(ggplot2)
+library(scales)
+ggplot(newData) + geom_freqpoly(aes(year, group = continent, colour = continent), stat = "count") + 
+  ylab("number of flood events") + ggtitle("flood events count by continents") + 
+  scale_x_discrete(breaks = pretty_breaks(n = 10))
+
+ggplot(newData, aes(year, duration, group = continent, colour = continent)) +
+  stat_summary(fun.y = sum, geom = "line") +
+  ylab("total duration") + ggtitle("duration count by continents") + 
+  scale_x_discrete(breaks = pretty_breaks(n = 10))
+
+ggplot(newData, aes(year, death, group = continent, colour = continent)) +
+  stat_summary(fun.y = sum, geom = "line") +
+  ylab("total death") + ggtitle("death count by continents") + 
+  scale_x_discrete(breaks = pretty_breaks(n = 10))
+
+ggplot(newData, aes(year, severity, group = continent, colour = continent)) +
+  stat_summary(fun.y = sum, geom = "line") +
+  ylab("sum of severity") + ggtitle("severity count by continents") + 
+  scale_x_discrete(breaks = pretty_breaks(n = 10))
+
+ggplot(newData, aes(year, affectedArea, group = continent, colour = continent)) +
+  stat_summary(fun.y = sum, geom = "line") +
+  ylab("sum of affected area(sq.km.)") + ggtitle("affected area count by continents") + 
+  scale_x_discrete(breaks = pretty_breaks(n = 10))
+
+ggplot(newData, aes(year, magnitude, group = continent, colour = continent)) +
+  stat_summary(fun.y = sum, geom = "line") +
+  ylab("sum of magnitude") + ggtitle("magnitude count by continents") + 
+  scale_x_discrete(breaks = pretty_breaks(n = 10))
+```
+
