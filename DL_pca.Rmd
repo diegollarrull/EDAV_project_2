@@ -34,32 +34,38 @@ close.nc(geopot.height)
 
 ## Principal component analysis on the floods in the UK during 1990
 
-We decided to subset the data and focus our attention in 5 flood events that occurred in the United Kingdom during 1990. We came up with these events after slicing the Global Floods data over time and generating an animation as allowed us to perfectly tackle big and isolated flood events over time.
+We decided to subset the data and focus our attention in five flood events that occurred in the United Kingdom during 1990. We came up with these events after slicing the Global Floods data over time and generating an animation that allowed us to perfectly tackle big and isolated flood events over time. The interactive animation is shown below:
 
-```{r cars}
+<iframe frameBorder="0" height="800px" width="900px" src="animations/yearly_floods/yearly_floods.html"></iframe>
+
+```{r floods, echo=FALSE}
 ## Extraction of phi data
 
 uk.floods = global.flood[c(3837,3845,3856,3924,3930),]
 ```
 
-## Transforming the data
+### Transforming the data
 
-Once the entries for the UK floods in 1990 have been located in the NOAA daily phi data, global flood records dates are transformed so that the two tables can be correctly related
+Once the entries for the UK floods in 1990 have been located in the Global Flood record, the next step was to locate that information withing the NOAA daily phi database. In order to do this, global flood record dates have been transformed into days since January 1st, 1948, so that the two tables can be correctly matched. The transformed values look like this: 
 
-```{r transformation}
+```{r transformation, echo=FALSE}
 uk.floods$Began <- as.numeric(as.POSIXct(as.Date(uk.floods$Began, "%d-%b-%y"), origin="1948-01-01")) %/% (24*60*60) 
 uk.floods$Ended <- as.numeric(as.POSIXct(as.Date(uk.floods$Ended, "%d-%b-%y"), origin="1948-01-01")) %/% (24*60*60) 
 uk.floods[,c("Began","Ended")]
 ```
 
-Using these intervals we proceeded to split the phi data into:
+Once the phi data for each flood event days was located, we came up with the following protocol for having five relevant datrices, one per flood:
 
-* All longitudes
-* Latitudes from 45??N to 60??N
-* Days ranging from 30 days before the start date to 30 days after the end date
+Each dataset is consituted by a ribbon subset of the phi data, ranging over all longitudes (in order to preserve the direction-shifting pattern of pressure waves) but only ranging on latitudes higher than 45N and lower than 60N. This contitutes a grid of 7x144=1008 cells for every day. In order to keep our datasets as matrices, we used the *as.vector()* function to create a vector collapsing the 1008 grid cells for every day. 
 
+Since R can't handle matrices with high dimensionality with *princomp()*, and we also wanted to capture the varying effect of pressure levels over time in several time dimensions, we decided to subset observations in the following way: 
 
-```{r}
+1) For every flood event, we designed an *interval()* function that, given the start and end dates of a specific flood event, returns a date interval ranging from 30 days before the start of the flood to 30 days after the day of the flood. That is, for a 4-day flood it returns a 64-day interval, and for a 16-day flood, it returns a 76-day interval. 
+2) Every interval is analized on all years ranging from 19 years before the year of the flood, to 19 years after the flood. That is, 39 years including the flood year. Combining the protocol we get that, for a 4-day flood event we have a 64-day period times 39 years = 2496 observations. Similarly, for a 16-day flood we have a 76-day period times 39 years = 2964 observations. 
+
+Hence, the final dimensions of the 5 matrices vary around 2418 and 2964 rows and all of them have 1008 columns (one per grid cell), as detailed below:
+
+```{r, echo=FALSE}
 uk.floods.x     <- which(daily.geopot.height$X > -1)
 uk.floods.y     <- which(daily.geopot.height$Y >= 45 & daily.geopot.height$Y <= 60)
 
@@ -95,80 +101,24 @@ uk.floods.phi.2  <- generate_data(uk.floods.x, uk.floods.y, uk.floods.t.2)
 uk.floods.phi.3  <- generate_data(uk.floods.x, uk.floods.y, uk.floods.t.3)
 uk.floods.phi.4  <- generate_data(uk.floods.x, uk.floods.y, uk.floods.t.4)
 uk.floods.phi.5  <- generate_data(uk.floods.x, uk.floods.y, uk.floods.t.5)
-
 ```
 
-Once we have the slices for each flood event, we ran PCA on them:
-
-```{r}
+```{r, echo=FALSE}
 uk.floods.pca.1 <- princomp(uk.floods.phi.1, cor = TRUE, scores = TRUE)
 uk.floods.pca.2 <- princomp(uk.floods.phi.2, cor = TRUE, scores = TRUE)
 uk.floods.pca.3 <- princomp(uk.floods.phi.3, cor = TRUE, scores = TRUE)
 uk.floods.pca.4 <- princomp(uk.floods.phi.4, cor = TRUE, scores = TRUE)
 uk.floods.pca.5 <- princomp(uk.floods.phi.5, cor = TRUE, scores = TRUE)
-
-
-summary(uk.floods.pca.1)
-plot(uk.floods.pca.1,type = "l")
-biplot(uk.floods.pca.1)
-
-summary(uk.floods.pca.2)
-plot(uk.floods.pca.2,type = "l")
-biplot(uk.floods.pca.2)
-
-summary(uk.floods.pca.3)
-plot(uk.floods.pca.3,type = "l")
-biplot(uk.floods.pca.3)
-
-summary(uk.floods.pca.4)
-plot(uk.floods.pca.4,type = "l")
-biplot(uk.floods.pca.4)
-
-summary(uk.floods.pca.5)
-plot(uk.floods.pca.5,type = "l")
-biplot(uk.floods.pca.5)
 ```
 
-The same analysis after standarization of the data yields: 
+Once we have the slices for each flood event, we ran PCA on them. Below are displayed the plots showing the variance that each component explains: 
 
-```{r}
-uk.floods.phi.1.scaled <- scale(uk.floods.phi.1)
-uk.floods.phi.2.scaled <- scale(uk.floods.phi.2)
-uk.floods.phi.3.scaled <- scale(uk.floods.phi.3)
-uk.floods.phi.4.scaled <- scale(uk.floods.phi.4)
-uk.floods.phi.5.scaled <- scale(uk.floods.phi.5)
-
-
-uk.floods.pca.1.scaled <- princomp(uk.floods.phi.1.scaled , cor = TRUE, scores = TRUE)
-uk.floods.pca.2.scaled <- princomp(uk.floods.phi.2.scaled , cor = TRUE, scores = TRUE)
-uk.floods.pca.3.scaled <- princomp(uk.floods.phi.3.scaled , cor = TRUE, scores = TRUE)
-uk.floods.pca.4.scaled <- princomp(uk.floods.phi.4.scaled , cor = TRUE, scores = TRUE)
-uk.floods.pca.5.scaled <- princomp(uk.floods.phi.5.scaled , cor = TRUE, scores = TRUE)
-
-summary(uk.floods.pca.1.scaled)
-plot(uk.floods.pca.1.scaled,type = "l")
-biplot(uk.floods.pca.1.scaled)
-
-summary(uk.floods.pca.2.scaled)
-plot(uk.floods.pca.2.scaled,type = "l")
-biplot(uk.floods.pca.2.scaled)
-
-summary(uk.floods.pca.3.scaled)
-plot(uk.floods.pca.3.scaled,type = "l")
-biplot(uk.floods.pca.3.scaled)
-
-summary(uk.floods.pca.4.scaled)
-plot(uk.floods.pca.4.scaled,type = "l")
-biplot(uk.floods.pca.4.scaled)
-
-summary(uk.floods.pca.5.scaled)
-plot(uk.floods.pca.5.scaled,type = "l")
-biplot(uk.floods.pca.5.scaled)
+```{r, echo = FALSE}
+plot(uk.floods.pca.1,type = "l", main = "PCA on UK flood no. 1 - Year: 1990")
+plot(uk.floods.pca.2,type = "l", main = "PCA on UK flood no. 2 - Year: 1990")
+plot(uk.floods.pca.3,type = "l", main = "PCA on UK flood no. 3 - Year: 1990")
+plot(uk.floods.pca.4,type = "l", main = "PCA on UK flood no. 4 - Year: 1990")
+plot(uk.floods.pca.5,type = "l", main = "PCA on UK flood no. 5 - Year: 1990")
 ```
 
-
-Some additional plots on the data
-
-```{r}
-```
-
+It can be seen that floods \#1, \#4 and \#5 have at least 6 significant principal components, whereas floods \#2 and \#3 have only 2 very significant components. All of them, however, show a considerable difference in explained variance between the first component and all other ones. 
