@@ -1,0 +1,285 @@
+{smcl}
+{com}{sf}{ul off}{txt}
+{com}. 
+. /*** 
+> EDAV Project 2: Regression with Principal Components
+> ===================================================
+>     
+> Aim: Visualize relationship between flood characteristics and number of people displaced
+> ----------------------------------------------------------------------------------------
+> ***/
+. 
+. qui log off
+{smcl}
+{com}{sf}{ul off}{smcl}
+{com}{sf}{ul off}{txt}
+{com}. 
+. /***
+> ### 1.  Visualize distribution of variables
+> 
+> * Severity:
+> 
+> ![](./Histogram_severity.png)
+> 
+> * Affected area:
+> 
+> ![](./Histogram_affected.png)
+> 
+> * Duration:
+> 
+> ![](./Histogram_duration.png)
+> 
+> * Number displaced:
+> 
+> ![](./Histogram_displaced.png)
+> 
+> ### 2.  Center and scale
+> 
+> Except for severity, other variables appear skewed, so log-transform them and then center and scale them.
+> ***/
+. 
+. qui log off
+{smcl}
+{com}{sf}{ul off}{smcl}
+{com}{sf}{ul off}{txt}
+{com}. 
+. /*** 
+> ### 3.  Linear regression
+> 
+> Perform multiple linear regression with "displaced" as dependent variable and other three variables as independent variables.  
+> ***/
+. /***
+> This model seems to explain ~19% of number of people displaced.
+> ***/
+. 
+. regress std_log_displaced severity std_log_affected std_log_duration
+
+      {txt}Source {c |}       SS       df       MS              Number of obs ={res}    3034
+{txt}{hline 13}{char +}{hline 30}           F(  3,  3030) ={res}  239.40
+    {txt}   Model {char |} {res} 581.158345     3  193.719448           {txt}Prob > F      = {res} 0.0000
+    {txt}Residual {char |} {res} 2451.84164  3030  .809188658           {txt}R-squared     = {res} 0.1916
+{txt}{hline 13}{char +}{hline 30}           Adj R-squared = {res} 0.1908
+    {txt}   Total {char |} {res} 3032.99998  3033  .999999994           {txt}Root MSE      = {res} .89955
+
+{txt}{hline 17}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}std_log_displa~d{col 18}{c |}      Coef.{col 30}   Std. Err.{col 42}      t{col 50}   P>|t|{col 58}     [95% Con{col 71}f. Interval]
+{hline 17}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 8}severity {c |}{col 18}{res}{space 2} .1240879{col 30}{space 2} .0421517{col 41}{space 1}    2.94{col 50}{space 3}0.003{col 58}{space 4} .0414392{col 71}{space 3} .2067367
+{txt}std_log_affected {c |}{col 18}{res}{space 2} .1801437{col 30}{space 2} .0188169{col 41}{space 1}    9.57{col 50}{space 3}0.000{col 58}{space 4} .1432485{col 71}{space 3}  .217039
+{txt}std_log_duration {c |}{col 18}{res}{space 2} .3070196{col 30}{space 2} .0184443{col 41}{space 1}   16.65{col 50}{space 3}0.000{col 58}{space 4} .2708549{col 71}{space 3} .3431842
+{txt}{space 11}_cons {c |}{col 18}{res}{space 2}-.2192853{col 30}{space 2} .0545864{col 41}{space 1}   -4.02{col 50}{space 3}0.000{col 58}{space 4}-.3263154{col 71}{space 3}-.1122551
+{txt}{hline 17}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}
+{com}. 
+. qui log off
+{smcl}
+{com}{sf}{ul off}{smcl}
+{com}{sf}{ul off}{txt}
+{com}. 
+. /***
+> Check assumptions of linear regression:
+> 
+> * Assumption of normality of residuals appears satisfied.
+> 
+> ![](./Histogram_kernel_density.png)
+> 
+> * Assumption of homoscedasticity of residuals appears satisfied.
+> 
+> ![](./Homoscedasticity.png)
+> 
+> * No evidence of significant collinearity (VIF <10).
+> ***/
+. 
+. vif
+
+{txt}    Variable {c |}       VIF       1/VIF  
+{hline 13}{c +}{hline 22}
+std_log_du~n {c |} {res}     1.30    0.766732
+{txt}std_log_af~d {c |} {res}     1.29    0.774600
+{txt}{space 4}severity {c |} {res}     1.06    0.945632
+{txt}{hline 13}{c +}{hline 22}
+    Mean VIF {c |} {res}     1.22
+{txt}
+{com}. 
+. /***
+> * Assumption of linearity appears satisfied.
+> 
+> ![](./Linearity_severity.png)
+> 
+> ![](./Linearity_affected.png)
+> 
+> ![](./Linearity_duration.png)
+> 
+> ### 4.  Perform principal components analysis on "affected", "severity", and "duration"
+> 
+> Estimate principal components.
+> ***/
+. 
+. pca severity std_log_affected std_log_duration
+
+{txt}Principal components/correlation{col 51}Number of obs    = {res}     4312
+{col 51}{txt}Number of comp.  = {res}        3
+{col 51}{txt}Trace            {col 68}= {res}        3
+{col 5}{txt}Rotation: (unrotated = principal){col 51}Rho              = {res}   1.0000
+
+{txt}{col 5}{hline 13}{c TT}{hline 60}
+{col 5}   Component {c |}   Eigenvalue   Difference         Proportion   Cumulative
+{col 5}{hline 13}{c +}{hline 60}
+{col 5}{ralign 12:Comp1} {c |}{res}      1.58649      .701889             0.5288       0.5288
+{txt}{col 5}{ralign 12:Comp2} {c |}{res}      .884599      .355685             0.2949       0.8237
+{txt}{col 5}{ralign 12:Comp3} {c |}{res}      .528914            .             0.1763       1.0000
+{txt}{col 5}{hline 13}{c BT}{hline 60}
+
+Principal components (eigenvectors) 
+
+{space 4}{hline 13}{c  TT}{hline 10}{hline 10}{hline 10}{c  TT}{hline 13}
+{space 4}{space 0}{ralign 12:Variable}{space 1}{c |}{space 1}{ralign 8:Comp1}{space 1}{space 1}{ralign 8:Comp2}{space 1}{space 1}{ralign 8:Comp3}{space 1}{c |}{space 1}{ralign 11:Unexplained}{space 1}
+{space 4}{hline 13}{c   +}{hline 10}{hline 10}{hline 10}{c   +}{hline 13}
+{space 4}{space 0}{ralign 12:severity}{space 1}{c |}{space 1}{ralign 8:{res:{sf:  0.4067}}}{space 1}{space 1}{ralign 8:{res:{sf:  0.9125}}}{space 1}{space 1}{ralign 8:{res:{sf:  0.0443}}}{space 1}{c |}{space 1}{center 11:{res:{sf:          0}}}{space 1}
+{space 4}{space 0}{ralign 12:std_log_af~d}{space 1}{c |}{space 1}{ralign 8:{res:{sf:  0.6412}}}{space 1}{space 1}{ralign 8:{res:{sf: -0.3196}}}{space 1}{space 1}{ralign 8:{res:{sf:  0.6977}}}{space 1}{c |}{space 1}{center 11:{res:{sf:          0}}}{space 1}
+{space 4}{space 0}{ralign 12:std_log_du~n}{space 1}{c |}{space 1}{ralign 8:{res:{sf:  0.6508}}}{space 1}{space 1}{ralign 8:{res:{sf: -0.2554}}}{space 1}{space 1}{ralign 8:{res:{sf: -0.7150}}}{space 1}{c |}{space 1}{center 11:{res:{sf:          0}}}{space 1}
+{space 4}{hline 13}{c  BT}{hline 10}{hline 10}{hline 10}{c  BT}{hline 13}
+
+{com}. 
+. /***
+> Component 1 explains ~53% of variance, so compute score of that component (pc1) and regress on that alone. 
+> ***/
+. 
+. qui log off
+{smcl}
+{com}{sf}{ul off}{smcl}
+{com}{sf}{ul off}{txt}
+{com}. 
+. /***
+> As seen, model R2 is similar to earlier model with separate terms for "magnitude" and "duration" (R2 ~0.18 versus ~0.19).
+> ***/
+. 
+. regress std_log_displaced pc1
+
+      {txt}Source {c |}       SS       df       MS              Number of obs ={res}    3034
+{txt}{hline 13}{char +}{hline 30}           F(  1,  3032) ={res}  660.36
+    {txt}   Model {char |} {res} 542.436732     1  542.436732           {txt}Prob > F      = {res} 0.0000
+    {txt}Residual {char |} {res} 2490.56325  3032  .821425874           {txt}R-squared     = {res} 0.1788
+{txt}{hline 13}{char +}{hline 30}           Adj R-squared = {res} 0.1786
+    {txt}   Total {char |} {res} 3032.99998  3033  .999999994           {txt}Root MSE      = {res} .90633
+
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}std_log_di~d{col 14}{c |}      Coef.{col 26}   Std. Err.{col 38}      t{col 46}   P>|t|{col 54}     [95% Con{col 67}f. Interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 9}pc1 {c |}{col 14}{res}{space 2} .3320503{col 26}{space 2} .0129215{col 37}{space 1}   25.70{col 46}{space 3}0.000{col 54}{space 4} .3067145{col 67}{space 3} .3573861
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2}-.0640488{col 26}{space 2} .0166419{col 37}{space 1}   -3.85{col 46}{space 3}0.000{col 54}{space 4}-.0966794{col 67}{space 3}-.0314183
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}
+{com}. 
+. /***
+> Regression model with "pc1" appears to be equal to or superior R2 to regression models with "duration" alone or "magnitude" alone.
+> ***/
+. regress std_log_displaced severity
+
+      {txt}Source {c |}       SS       df       MS              Number of obs ={res}    3034
+{txt}{hline 13}{char +}{hline 30}           F(  1,  3032) ={res}   67.93
+    {txt}   Model {char |} {res} 66.4655162     1  66.4655162           {txt}Prob > F      = {res} 0.0000
+    {txt}Residual {char |} {res} 2966.53446  3032  .978408464           {txt}R-squared     = {res} 0.0219
+{txt}{hline 13}{char +}{hline 30}           Adj R-squared = {res} 0.0216
+    {txt}   Total {char |} {res} 3032.99998  3033  .999999994           {txt}Root MSE      = {res} .98915
+
+{txt}{hline 13}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}std_log_di~d{col 14}{c |}      Coef.{col 26}   Std. Err.{col 38}      t{col 46}   P>|t|{col 54}     [95% Con{col 67}f. Interval]
+{hline 13}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{space 4}severity {c |}{col 14}{res}{space 2} .3714916{col 26}{space 2} .0450724{col 37}{space 1}    8.24{col 46}{space 3}0.000{col 54}{space 4}  .283116{col 67}{space 3} .4598672
+{txt}{space 7}_cons {c |}{col 14}{res}{space 2}-.4636299{col 26}{space 2} .0590483{col 37}{space 1}   -7.85{col 46}{space 3}0.000{col 54}{space 4}-.5794086{col 67}{space 3}-.3478511
+{txt}{hline 13}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}
+{com}. regress std_log_displaced std_log_affected
+
+      {txt}Source {c |}       SS       df       MS              Number of obs ={res}    3034
+{txt}{hline 13}{char +}{hline 30}           F(  1,  3032) ={res}  374.66
+    {txt}   Model {char |} {res} 333.563804     1  333.563804           {txt}Prob > F      = {res} 0.0000
+    {txt}Residual {char |} {res} 2699.43618  3032  .890315361           {txt}R-squared     = {res} 0.1100
+{txt}{hline 13}{char +}{hline 30}           Adj R-squared = {res} 0.1097
+    {txt}   Total {char |} {res} 3032.99998  3033  .999999994           {txt}Root MSE      = {res} .94357
+
+{txt}{hline 17}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}std_log_displa~d{col 18}{c |}      Coef.{col 30}   Std. Err.{col 42}      t{col 50}   P>|t|{col 58}     [95% Con{col 71}f. Interval]
+{hline 17}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+std_log_affected {c |}{col 18}{res}{space 2} .3362418{col 30}{space 2} .0173714{col 41}{space 1}   19.36{col 50}{space 3}0.000{col 58}{space 4} .3021809{col 71}{space 3} .3703027
+{txt}{space 11}_cons {c |}{col 18}{res}{space 2}-.0289544{col 30}{space 2} .0171955{col 41}{space 1}   -1.68{col 50}{space 3}0.092{col 58}{space 4}-.0626704{col 71}{space 3} .0047615
+{txt}{hline 17}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}
+{com}. regress std_log_displaced std_log_duration
+
+      {txt}Source {c |}       SS       df       MS              Number of obs ={res}    3034
+{txt}{hline 13}{char +}{hline 30}           F(  1,  3032) ={res}  590.56
+    {txt}   Model {char |} {res} 494.448928     1  494.448928           {txt}Prob > F      = {res} 0.0000
+    {txt}Residual {char |} {res} 2538.55105  3032  .837252986           {txt}R-squared     = {res} 0.1630
+{txt}{hline 13}{char +}{hline 30}           Adj R-squared = {res} 0.1627
+    {txt}   Total {char |} {res} 3032.99998  3033  .999999994           {txt}Root MSE      = {res} .91502
+
+{txt}{hline 17}{c TT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{col 1}std_log_displa~d{col 18}{c |}      Coef.{col 30}   Std. Err.{col 42}      t{col 50}   P>|t|{col 58}     [95% Con{col 71}f. Interval]
+{hline 17}{c +}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+std_log_duration {c |}{col 18}{res}{space 2} .3992275{col 30}{space 2} .0164281{col 41}{space 1}   24.30{col 50}{space 3}0.000{col 58}{space 4} .3670161{col 71}{space 3} .4314389
+{txt}{space 11}_cons {c |}{col 18}{res}{space 2} -.063597{col 30}{space 2} .0168168{col 41}{space 1}   -3.78{col 50}{space 3}0.000{col 58}{space 4}-.0965705{col 71}{space 3}-.0306235
+{txt}{hline 17}{c BT}{hline 11}{hline 11}{hline 9}{hline 8}{hline 13}{hline 12}
+{res}{txt}
+{com}. 
+. qui log off
+{smcl}
+{com}{sf}{ul off}{smcl}
+{com}{sf}{ul off}{txt}
+{com}. 
+. /***
+> Check assumptions of linear regression for model with principal component alone:
+> 
+> * Assumption of normality of residuals appears satisfied.
+> 
+> ![](./Histogram_kernel_density_2.png)
+> 
+> * Assumption of homoscedasticity of residuals appears satisfied.
+> 
+> ![](./Homoscedasticity_2.png)
+> 
+> * No evidence of significant collinearity (VIF <10).
+> ***/
+. 
+. vif
+
+{txt}    Variable {c |}       VIF       1/VIF  
+{hline 13}{c +}{hline 22}
+{space 9}pc1 {c |} {res}     1.00    1.000000
+{txt}{hline 13}{c +}{hline 22}
+    Mean VIF {c |} {res}     1.00
+{txt}
+{com}. 
+. /***
+> * Assumption of linearity appears satisfied.
+> 
+> ![](./Linearity_pc1.png)
+> 
+> ### 5.  Visually assess relationship between multiple flood characteristics and # displaced
+> ***/
+. /***
+> Such a visualization would be difficult to perform with traditional linear regression in the presence of multiple independent variables.
+> ***/
+. 
+. qui log off
+{smcl}
+{com}{sf}{ul off}{smcl}
+{com}{sf}{ul off}{txt}
+{com}. 
+. /***
+> ![](./Scatter.png)
+> 
+> ### 6.  Summmary
+> 
+> Principal components analysis allowed dimension reduction to one dimension, thereby allowing direct visualization. 
+> ***/
+. /***
+> Prediction using one principal component was equally predictive as regression limited to one traditional independent variable
+> and additionally allowed direct visualization between predictor and outcome. However, the disadvantage of this approach is that 
+> the first principal component is more difficult to conceptually understand than a traditional predictor such as severity. 
+> ***/
+. 
+. qui log close
+{smcl}
+{com}{sf}{ul off}
