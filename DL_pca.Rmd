@@ -17,6 +17,9 @@ library(dplyr)
 library(maps)
 library(zoo)
 library(animation)
+library(devtools)
+#install_github("ggbiplot", "vqv")
+library(ggbiplot)
 
 #Flood record data from Dartmouth Flood Observatory (GlobalFloodsRecord.xls)
 global.flood = read.xls("data/GlobalFloodsRecordModified.xls",header = TRUE)
@@ -52,7 +55,7 @@ uk.floods[,c("Began","Ended")]
 Using these intervals we proceeded to split the phi data into:
 
 * All longitudes
-* Latitudes from 45ºN to 60ºN
+* Latitudes from 45??N to 60??N
 * Days ranging from 30 days before the start date to 30 days after the end date
 
 
@@ -72,14 +75,17 @@ uk.floods.t.5 <- interval(7330,7345)
 
 
 generate_data <- function(x,y,range){
-
-  dims <- c(length(x) * length(y), range[2]-range[1]+1)
-  size <- length(x) * length(y) * (range[2]-range[1]+1)
-  data <- array(1:size, dim=dims)
+  years = 19
   j <- 1
-  for (i in range[1]:range[2]){
-    data[,j] <- as.vector(t(daily.geopot.height$phi[x, y, i]))
-    j <- j + 1
+  dims <- c((range[2]-range[1]+1)*(2*years+1),length(x) * length(y))
+  size <- length(x) * length(y) * ((range[2]-range[1]+1)*(2*years+1))
+  data <- array(1:size, dim=dims)
+  print(dims)
+  for (w in -years:years){
+    for (i in range[1]:range[2]){
+      data[j,] <- as.vector(t(daily.geopot.height$phi[x, y, i+(365*w)]))
+      j <- j + 1
+    }
   }
   return(data)
 }
@@ -132,10 +138,6 @@ uk.floods.phi.3.scaled <- scale(uk.floods.phi.3)
 uk.floods.phi.4.scaled <- scale(uk.floods.phi.4)
 uk.floods.phi.5.scaled <- scale(uk.floods.phi.5)
 
-	
-colMeans(uk.floods.phi.1.scaled)  # faster version of apply(scaled.dat, 2, mean)
-apply(uk.floods.phi.1.scaled, 2, sd)
-
 
 uk.floods.pca.1.scaled <- princomp(uk.floods.phi.1.scaled , cor = TRUE, scores = TRUE)
 uk.floods.pca.2.scaled <- princomp(uk.floods.phi.2.scaled , cor = TRUE, scores = TRUE)
@@ -162,5 +164,11 @@ biplot(uk.floods.pca.4.scaled)
 summary(uk.floods.pca.5.scaled)
 plot(uk.floods.pca.5.scaled,type = "l")
 biplot(uk.floods.pca.5.scaled)
+```
+
+
+Some additional plots on the data
+
+```{r}
 ```
 
