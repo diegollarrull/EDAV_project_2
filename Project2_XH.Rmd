@@ -1,10 +1,9 @@
 ---
-title: "EDAV Project 2"
+title: "EDAV Project 2 Variable Relationship Exploration Grouped by Country"
 output: html_document
 ---
   
-```{r}
-library(scatterplot3d)
+```{r, warning=FALSE, message=FALSE, include=FALSE}
 library(ggplot2)
 library(reshape)
 library(RNetCDF)
@@ -13,174 +12,321 @@ library(ggmap)
 library(dplyr)
 library(maps)
 
-#have to manually set working directory here
-data <- read.csv(file="GlobalFloodsRecord_HK.csv")
-data1 <- cbind(data$duration,data$affected,data$died)
-
-pc1 <- princomp(data1, cor = TRUE, scores = TRUE)
-summary(pc1)
-plot(pc1,type = "l")
-biplot(pc1)
-
-scatterplot3d(data$duration,data$affected,data$died)
-
+######################################################################
 #set working directory to the folder with data
 #Climate data (NOAA_Daily_phi_500mb.nc)
-geopot.height = open.nc("NOAA_Daily_phi_500mb.nc")
-print.nc(geopot.height)
-daily.geopot.height = read.nc(geopot.height)
-Time.point=daily.geopot.height$T
-longitude=daily.geopot.height$X
-latitude=daily.geopot.height$Y
-pressure=daily.geopot.height$P
-phi=daily.geopot.height$phi
-close.nc(geopot.height)
+#geopot.height = open.nc("NOAA_Daily_phi_500mb.nc")
+#print.nc(geopot.height)
+#daily.geopot.height = read.nc(geopot.height)
+#Time.point=daily.geopot.height$T
+#longitude=daily.geopot.height$X
+#latitude=daily.geopot.height$Y
+#pressure=daily.geopot.height$P
+#phi=daily.geopot.height$phi
+#close.nc(geopot.height)
+######################################################################
+```
 
+For this section, we mainly look at the dataset from Dartmouth Flood Observatory--GlobalFloodsRecord.xls, which documents flood events in all parts of the world since 1985 until early this year--and summarize the data grouped by country. We pick five variables: duration of flood in days, number of death, magnitude of the flood, severity level, and the affected area in squared kilometers; then sum each variable up for each country to get the cumulative flood information for every country.
+
+The country name variable in the dataset is kind of messy, in the way that there are not only NA entries but also misspelled country names. We take care of this issue and group by country using "dplyr" package.
+
+Now that we get a dataset, each of whose row is a country and each column is a feature (total duration in that country, cumulative severity of flood, etc.), we derive the geolocation of each country in terms of longitude and latitude by using geocode() function from "ggmap" package, and attach them after each row.
+
+We have the first plot as following:
+
+```{r, warning=FALSE, message=FALSE, echo=FALSE}
 #Flood record data from Dartmouth Flood Observatory (GlobalFloodsRecord.xls)
+#setwd("~/Documents/workspace/EDAV_project_2/data")
 global.flood = read.xls("GlobalFloodsRecordModified.xls",header = TRUE)
 global.flood$Country=as.character(global.flood$Country)
 
 #subset the dataset to get features we want
-duration.death.by.country = global.flood %>%
+summary.by.country = global.flood %>%
   filter(!is.na(Country) & Country != "#N/A!" & Country != "") %>%
-  select(Country, Duration.in.Days, Dead) %>%
+  select(Country, Duration.in.Days, Dead, Magnitude..M..., Severity.., Affected.sq.km) %>%
   group_by(Country) %>%
   summarise(
     total.duration = sum(as.numeric(Duration.in.Days)),
-    total.death = sum(as.numeric(Dead))
+    total.death = sum(as.numeric(Dead)),
+    total.magnitude = sum(as.numeric(Magnitude..M...)),
+    total.severity = sum(as.numeric(Severity..)),
+    total.affected.sq.km = sum(as.numeric(Affected.sq.km))
   )
 
+summary.by.country[is.na(summary.by.country)] = 0
+
 #convert the country names by removing "\xa0" and beginning/ending whitespace
-for (i in 1:nrow(duration.death.by.country)) {
-  duration.death.by.country$Country[i] = gsub("\xa0","",
-                                              duration.death.by.country$Country[i])
-  duration.death.by.country$Country[i] = gsub("^\\s+|\\s+$", "",
-                                              duration.death.by.country$Country[i])
+for (i in 1:nrow(summary.by.country)) {
+  summary.by.country$Country[i] = gsub("\xa0","",
+                                              summary.by.country$Country[i])
+  summary.by.country$Country[i] = gsub("^\\s+|\\s+$", "",
+                                              summary.by.country$Country[i])
   
 }
 
-duration.death.byCountry = duration.death.by.country %>%
+country.summary = summary.by.country %>%
   group_by(Country) %>%
   summarise(
     total.duration = sum(total.duration),
-    total.death = sum(total.death)
+    total.death = sum(total.death),
+    total.magnitude = sum(total.magnitude),
+    total.severity = sum(total.severity),
+    total.affected.sq.km = sum(total.affected.sq.km)
   )
 
 #Right now we are left with misspelled country names; without better ideas 
 #we correct them manually
-for (i in 1:nrow(duration.death.byCountry)) {
-  if (duration.death.byCountry$Country[i]=="Bangaldesh" | 
-      duration.death.byCountry$Country[i]=="Bangledesh" ) {
-    duration.death.byCountry$Country[i]="Bangladesh"
+for (i in 1:nrow(country.summary)) {
+  if (country.summary$Country[i]=="Bangaldesh" | 
+      country.summary$Country[i]=="Bangledesh" ) {
+    country.summary$Country[i]="Bangladesh"
   }
-  else if (duration.death.byCountry$Country[i]=="Boliva") {
-    duration.death.byCountry$Country[i]="Bolivia"
+  else if (country.summary$Country[i]=="Boliva") {
+    country.summary$Country[i]="Bolivia"
   }
-  else if (duration.death.byCountry$Country[i]=="Bosnia and Herzogovina" |
-           duration.death.byCountry$Country[i]=="Bosnia-Hercegovenia" |
-           duration.death.byCountry$Country[i]=="Bosnia-Herzegovina") {
-    duration.death.byCountry$Country[i]="Bosnia and Herzegovina"
+  else if (country.summary$Country[i]=="Bosnia and Herzogovina" |
+           country.summary$Country[i]=="Bosnia-Hercegovenia" |
+           country.summary$Country[i]=="Bosnia-Herzegovina") {
+    country.summary$Country[i]="Bosnia and Herzegovina"
   }
-  else if (duration.death.byCountry$Country[i]=="Britain, Ireland") {    duration.death.byCountry$Country[i]="Ireland"
+  else if (country.summary$Country[i]=="Britain, Ireland") {    country.summary$Country[i]="Ireland"
   }
-  else if (duration.death.byCountry$Country[i]=="Burkino Faso") {    duration.death.byCountry$Country[i]="Burkina Faso"
+  else if (country.summary$Country[i]=="Burkino Faso") {    country.summary$Country[i]="Burkina Faso"
   }
-  else if (duration.death.byCountry$Country[i]=="Burma/Myanmar" |
-           duration.death.byCountry$Country[i]=="Myanamar" |
-           duration.death.byCountry$Country[i]=="Myanmar") {    duration.death.byCountry$Country[i]="Burma"
+  else if (country.summary$Country[i]=="Burma/Myanmar" |
+           country.summary$Country[i]=="Myanamar" |
+           country.summary$Country[i]=="Myanmar") {    country.summary$Country[i]="Burma"
   }
-  else if (duration.death.byCountry$Country[i]=="Camaroun") {    duration.death.byCountry$Country[i]="Cameroon"
+  else if (country.summary$Country[i]=="Camaroun") {    country.summary$Country[i]="Cameroon"
   }
-  else if (duration.death.byCountry$Country[i]=="Columbia") {    duration.death.byCountry$Country[i]="Colombia"
+  else if (country.summary$Country[i]=="Columbia") {    country.summary$Country[i]="Colombia"
   }
-  else if (duration.death.byCountry$Country[i]=="Comoros islands") {    duration.death.byCountry$Country[i]="Comoros Islands"
+  else if (country.summary$Country[i]=="Comoros islands") {    country.summary$Country[i]="Comoros Islands"
   }
-  else if (duration.death.byCountry$Country[i]=="Congo") {    duration.death.byCountry$Country[i]="Congo Republic"
+  else if (country.summary$Country[i]=="Congo") {    country.summary$Country[i]="Congo Republic"
   }
-  else if (duration.death.byCountry$Country[i]=="Congo" | 
-           duration.death.byCountry$Country[i]=="Congo Republic" |
-           duration.death.byCountry$Country[i]=="Democratic Republic Congo" |
-           duration.death.byCountry$Country[i]=="Democratic Republic of Congo" |
-           duration.death.byCountry$Country[i]=="DR Congo") {    duration.death.byCountry$Country[i]="Democratic Republic of the Congo"
+  else if (country.summary$Country[i]=="Congo" | 
+           country.summary$Country[i]=="Congo Republic" |
+           country.summary$Country[i]=="Democratic Republic Congo" |
+           country.summary$Country[i]=="Democratic Republic of Congo" |
+           country.summary$Country[i]=="DR Congo") {    country.summary$Country[i]="Democratic Republic of the Congo"
   }
-  else if (duration.death.byCountry$Country[i]=="Domnican Republic") {    duration.death.byCountry$Country[i]="Dominican Republic"
+  else if (country.summary$Country[i]=="Domnican Republic") {    country.summary$Country[i]="Dominican Republic"
   }
-  else if (duration.death.byCountry$Country[i]=="El Savador") {    duration.death.byCountry$Country[i]="El Salvador"
+  else if (country.summary$Country[i]=="El Savador") {    country.summary$Country[i]="El Salvador"
   }
-  else if (duration.death.byCountry$Country[i]=="Guatamala") {    duration.death.byCountry$Country[i]="Guatemala"
+  else if (country.summary$Country[i]=="Guatamala") {    country.summary$Country[i]="Guatemala"
   }
-  else if (duration.death.byCountry$Country[i]=="Inda") {    duration.death.byCountry$Country[i]="India"
+  else if (country.summary$Country[i]=="Inda") {    country.summary$Country[i]="India"
   }
-  else if (duration.death.byCountry$Country[i]=="Kazahkstan") {    duration.death.byCountry$Country[i]="Kazakhstan"
+  else if (country.summary$Country[i]=="Kazahkstan") {    country.summary$Country[i]="Kazakhstan"
   }
-  else if (duration.death.byCountry$Country[i]=="Malayasia") {    duration.death.byCountry$Country[i]="Malaysia"
+  else if (country.summary$Country[i]=="Malayasia") {    country.summary$Country[i]="Malaysia"
   }
-  else if (duration.death.byCountry$Country[i]=="Moldava" |
-           duration.death.byCountry$Country[i]=="Moldovo") {    duration.death.byCountry$Country[i]="Moldova"
+  else if (country.summary$Country[i]=="Moldava" |
+           country.summary$Country[i]=="Moldovo") {    country.summary$Country[i]="Moldova"
   }
-  else if (duration.death.byCountry$Country[i]=="Papua New Gunea") {    duration.death.byCountry$Country[i]="Papua New Guinea"
+  else if (country.summary$Country[i]=="Papua New Gunea") {    country.summary$Country[i]="Papua New Guinea"
   }
-  else if (duration.death.byCountry$Country[i]=="Philipines" |
-           duration.death.byCountry$Country[i]=="Philippine" |
-           duration.death.byCountry$Country[i]=="Phillipines" |
-           duration.death.byCountry$Country[i]=="Phillippines") {    duration.death.byCountry$Country[i]="Philippines"
+  else if (country.summary$Country[i]=="Philipines" |
+           country.summary$Country[i]=="Philippine" |
+           country.summary$Country[i]=="Phillipines" |
+           country.summary$Country[i]=="Phillippines") {    country.summary$Country[i]="Philippines"
   }
-  else if (duration.death.byCountry$Country[i]=="Serbia-Montenegro") {    duration.death.byCountry$Country[i]="Serbia and Montenegro"
+  else if (country.summary$Country[i]=="Serbia-Montenegro") {    country.summary$Country[i]="Serbia and Montenegro"
   }
-  else if (duration.death.byCountry$Country[i]=="Tajikstan") {    duration.death.byCountry$Country[i]="Tajikistan"
+  else if (country.summary$Country[i]=="Tajikstan") {    country.summary$Country[i]="Tajikistan"
   }
-  else if (duration.death.byCountry$Country[i]=="Texas" |
-           duration.death.byCountry$Country[i]=="USA.") {    duration.death.byCountry$Country[i]="USA"
+  else if (country.summary$Country[i]=="Texas" |
+           country.summary$Country[i]=="USA.") {    country.summary$Country[i]="USA"
   }
-  else if (duration.death.byCountry$Country[i]=="Thiland") {    duration.death.byCountry$Country[i]="Thailand"
+  else if (country.summary$Country[i]=="Thiland") {    country.summary$Country[i]="Thailand"
   }
-  else if (duration.death.byCountry$Country[i]=="UK" |
-           duration.death.byCountry$Country[i]=="Britain") {    duration.death.byCountry$Country[i]="United Kingdom"
+  else if (country.summary$Country[i]=="UK" |
+           country.summary$Country[i]=="Britain") {    country.summary$Country[i]="United Kingdom"
   }
-  else if (duration.death.byCountry$Country[i]=="Uruguay,") {    duration.death.byCountry$Country[i]="Uruguay"
+  else if (country.summary$Country[i]=="Uruguay,") {    country.summary$Country[i]="Uruguay"
   }
-  else if (duration.death.byCountry$Country[i]=="USSR") {    duration.death.byCountry$Country[i]="Soviet Union"
+  else if (country.summary$Country[i]=="USSR") {    country.summary$Country[i]="Soviet Union"
   }
-  else if (duration.death.byCountry$Country[i]=="Venezulea") {    duration.death.byCountry$Country[i]="Venezuela"
+  else if (country.summary$Country[i]=="Venezulea") {    country.summary$Country[i]="Venezuela"
   }
-  else if (duration.death.byCountry$Country[i]=="Viet Nam") {    duration.death.byCountry$Country[i]="Vietnam"
+  else if (country.summary$Country[i]=="Viet Nam") {    country.summary$Country[i]="Vietnam"
   }
-  else if (duration.death.byCountry$Country[i]=="Zimbawe") {    duration.death.byCountry$Country[i]="Zimbabwe"
+  else if (country.summary$Country[i]=="Zimbawe") {    country.summary$Country[i]="Zimbabwe"
   }
 }
 
 #now that we fix the misspelling problem, we can get the data separated by country
-duration.death.byCountry = duration.death.byCountry %>%
+country.summary = country.summary %>%
   group_by(Country) %>%
   summarise(
     total.duration = sum(total.duration),
-    total.death = sum(total.death)
+    total.death = sum(total.death),
+    total.magnitude = sum(total.magnitude),
+    total.severity = sum(total.severity),
+    total.affected.sq.km = sum(total.affected.sq.km)
   )
 
 #getting location of country (longitude and latitude) by country name
-geocodes <- geocode(duration.death.byCountry$Country)
-duration.death.with.country.location <- data.frame(duration.death.byCountry,geocodes)
+geocodes <- geocode(country.summary$Country)
+summary.with.country.location <- data.frame(country.summary,geocodes)
 
-country.longitude = duration.death.with.country.location$lon
-country.latitude = duration.death.with.country.location$lat
-country.duration = duration.death.with.country.location$total.duration
-country.death = duration.death.with.country.location$total.death
+country.longitude = summary.with.country.location$lon
+country.latitude = summary.with.country.location$lat
 worldmap = map_data("world")
-#the plot displays each country as a point on the world map, whose size marks the 
+
+#the following plot displays each country as a point on world map, whose size marks 
 #total number of death during flood (bigger means more people), and color indicates 
-#the total duration of flood in days (darker means flood lasting longer). The darker 
+#the total duration of flood in days (darker means flood lasting longer). The darker
 #(more red) points are clearly bigger, which clearly demonstrates an intuitive 
 #relationship that the longer the flood lasts, the more people would die.
 ggplot(worldmap,aes(long, lat)) +
   geom_polygon(aes(group=group), fill="white",color="gray40",size=0.2) +
-  geom_jitter(data=duration.death.with.country.location, 
-              aes(country.longitude, country.latitude, color=country.duration, 
-                  size=country.death), alpha=1) + 
+  geom_jitter(data=summary.with.country.location, 
+              aes(country.longitude, country.latitude, color=total.duration, 
+                  size=total.death), alpha=1) + 
   scale_size(name = "Number of \nDeath in \nthe country") +
   scale_colour_gradient(low="yellow", high="red", 
                         guide = "colourbar", 
                         name = "Flood Duration \nby Days in \nthe country") +
-  ggtitle("Duration vs. Death by Country") +
-  labs(x="Longitude",y="Latitude") 
+  ggtitle("Toal Duration vs. Total Death by Country") +
+  labs(x="Longitude",y="Latitude")
+```
+
+This plot displays each country as a circle on the world map, whose size marks the total number of death during the floods happened in that specific country (bigger means more people), and the color indicates the total duration of all floods in days for that country (darker means floods last longer). The darker (i.e., more red) circles are clearly bigger, which demonstrates an intuitive relationship that the longer the floods lasted, the more people would die.
+
+
+The second plot explores the relationship between the cumulative severity of all floods and the total affected area in squared kilometers:
+
+```{r, warning=FALSE, message=FALSE, echo=FALSE}
+#Similarly, we have the following plot of variable by country comparison:
+#circle size marks cumulative severity of flood, and color indicates 
+#the total affected area in squared kilometers. Like the last plot, the darker
+#(more red) points are clearly bigger, which shows an intuitive 
+#relationship that the more area of the floods affected in a country, 
+#the more severe those floods would be.
+ggplot(worldmap,aes(long, lat)) +
+  geom_polygon(aes(group=group), fill="white",color="gray40",size=0.2) +
+  geom_jitter(data=summary.with.country.location, 
+              aes(country.longitude, country.latitude, color=total.affected.sq.km, 
+                  size=total.severity), alpha=1) + 
+  scale_size(name = "Cumulative \nSeverity \nof flood in \nthe country") +
+  scale_colour_gradient(low="gold", high="dodgerblue", 
+                        guide = "colourbar", 
+                        name = "Total Affected \nArea in sq km \nin the country") +
+  ggtitle("Cumulative Severity vs. Total Affected Area by Country") +
+  labs(x="Longitude",y="Latitude")
+```
+
+as what we would expect intuitively, the darker (more red) circles are obviously bigger, which shows a direct relationship that the more area of the floods affected in a country, the more severe those floods would be.
+
+The third plot helps us to verify our intuition that the longer the floods lasted in a country, the more severe those floods would be:
+
+```{r, warning=FALSE, message=FALSE, echo=FALSE}
+#The following plot compares the total duration and cumulative severity, 
+#another comparison with pretty intuitive relationship, especially given 
+#the similar pattern observed in the first two plots: we observe that 
+#the longer the flood lasts in a country, the more severe those floods would be.
+ggplot(worldmap,aes(long, lat)) +
+  geom_polygon(aes(group=group), fill="white",color="gray40",size=0.2) +
+  geom_jitter(data=summary.with.country.location, 
+              aes(country.longitude, country.latitude, color=total.duration, 
+                  size=total.severity), alpha=1) + 
+  scale_size(name = "Cumulative \nSeverity \nof flood in \nthe country") +
+  scale_colour_gradient(low="turquoise1", high="violetred", 
+                        guide = "colourbar", 
+                        name = "Flood Duration \nby Days in \nthe country") +
+  ggtitle("Cumulative Severity vs. Total Duration of Flood by Country") +
+  labs(x="Longitude",y="Latitude")
+```
+
+Next plot investigates the relationship between the cumulative severity of the floods in a country and the total number of death during those floods in that country:
+
+```{r, warning=FALSE, message=FALSE, echo=FALSE}
+#severity vs. death, another intuitive relationship:
+ggplot(worldmap,aes(long, lat)) +
+  geom_polygon(aes(group=group), fill="white",color="gray40",size=0.2) +
+  geom_jitter(data=summary.with.country.location, 
+              aes(country.longitude, country.latitude, color=total.death, 
+                  size=total.severity), alpha=1) + 
+  scale_size(name = "Cumulative \nSeverity \nof flood in \nthe country") +
+  scale_colour_gradient(low="seagreen1", high="orangered1", 
+                        guide = "colourbar", 
+                        name = "Number of \nDeath in \nthe country") +
+  ggtitle("Cumulative Severity vs. Total Death by Country") +
+  labs(x="Longitude",y="Latitude")
+```
+
+It turns out that these two features also have a direct proportional relationship.
+
+Lastly, we question whether this kind of relationship exists between the cumulative magnitude of floods and the number of death during floods in a specific country. Since magnitude is calculated by the formula $\text{magnitude}=\text{log }(\text{duration}\cdot \text{severity}\cdot \text{total affected area}),$ and we just observed from our plots the pairwise directly proportional relationship among the three variables used to calculate the magnitude along with the number of death, we'd expect the relationship between these variables and number of death 
+is also apparent. We confirm this speculation with the following plot:
+
+```{r, warning=FALSE, message=FALSE, echo=FALSE}
+#Since magnitude is calculated by LOG(Duration x Severity x Affected Area), 
+#and we just observed from our plots the pairwise directly proportional 
+#relationship among the three variables used to calculate the magnitude,
+#we'd expect the relationship between these variables and number of death 
+#is also apparent. We verify this with the following plot:
+ggplot(worldmap,aes(long, lat)) +
+  geom_polygon(aes(group=group), fill="white",color="gray40",size=0.2) +
+  geom_jitter(data=summary.with.country.location, 
+              aes(country.longitude, country.latitude, color=total.death, 
+                  size=total.magnitude), alpha=1) + 
+  scale_size(name = "Cumulative \nFlood \nMagnitude \nin the country") +
+  scale_colour_gradient(low="lightpink", high="firebrick1", 
+                        guide = "colourbar", 
+                        name = "Number of \nDeath in \nthe country") +
+  ggtitle("Cumulative Magnitude of Flood vs. Total Death by Country") +
+  labs(x="Longitude",y="Latitude")
+
+#total.duration,total.death,total.magnitude,total.severity,total.affected.sq.km
+```
+
+```{r, warning=FALSE, message=FALSE, echo=FALSE}
+### Draw squares
+mydf <- data.frame(id = rep(1:6, each = 5),
+                   x = c(0, 6, 0, -6, 0,
+                         0, 5, 0, -5, 0,
+                         0, 4, 0, -4, 0,
+                         0, 3, 0, -3, 0,
+                         0, 2, 0, -2, 0,
+                         0, 1, 0, -1, 0),
+                   y = c(6, 0, -6, 0, 6,
+                         5, 0, -5, 0, 5,
+                         4, 0, -4, 0, 4,
+                         3, 0, -3, 0, 3,
+                         2, 0, -2, 0, 2,
+                         1, 0, -1, 0, 1))
+
+g <- ggplot(data = mydf, aes(x = x, y = y, group = factor(id))) +geom_path()
+
+### Draw polygons
+mydf2 <- data.frame(id = rep(7:8, each = 5),
+                    x = c(0, 6, 0, -5, 0,
+                          0, 5, 0, -5, 0),
+                    y = c(6, 0, -4, 0, 6,
+                          5, 0, -3, 0, 5))
+
+gg <- g +
+  geom_polygon(data = mydf2, aes(x = x, y = y, group = factor(id), fill = factor(id))) +
+  scale_fill_manual(name = "Time", values = c("darkolivegreen4", "brown4"),
+                    labels = c("Past", "Present"))
+
+
+### Add annotation
+
+mydf3 <- data.frame(x = c(0, 6.5, 0, -6.5),
+                    y = c(6.5, 0, -6.5, 0),
+                    label = c("system", "supply", "security", "well-being"))
+
+
+ggg <- gg + 
+       annotate("text", x = mydf3$x, y = mydf3$y, label = mydf3$label, size = 3)
+
+ggsave(ggg, file = "name.png", width = 10, height = 9)
+
 
 ```
