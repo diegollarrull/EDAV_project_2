@@ -116,9 +116,13 @@ $(document).ready(function () {
 
 
 <!-- BEGINNING OF HOOMAN'S CODE-->
-<h1 id="edav-project-2-regression-with-principal-components">EDAV Project 2: Regression with Principal Components</h1>
-<h2 id="aim-visualize-relationship-between-flood-characteristics-and-number-of-people-displaced">Aim: Visualize relationship between flood characteristics and number of people displaced</h2>
-<h3 id="visualize-distribution-of-variables">1. Visualize distribution of variables</h3>
+
+<h3 id="visualize-distribution-of-variables">Global flood records dataset analysis</h3>
+
+<div> As a preliminar analysis, we decided to visualize the relationship between flood between the flood characteristics and the number of people displaced in the Global Flood record database. Firstly, we visualized the distribution of each variable:</div>
+
+
+
 <ul>
 <li>Severity:</li>
 </ul>
@@ -147,11 +151,9 @@ $(document).ready(function () {
 <img src="./hk/img/Histogram_displaced.png" />
 
 </div>
-<h3 id="center-and-scale">2. Center and scale</h3>
-<p>Except for severity, other variables appear skewed, so log-transform them and then center and s cale them.</p>
-<h3 id="linear-regression">3. Linear regression</h3>
-<p>Perform multiple linear regression with &quot;displaced&quot; as dependent variable and other three varia bles as independent variables.</p>
-<p>This model seems to explain ~19% of number of people displaced.</p>
+
+Except for severity, other variables appear skewed, so we log-transformed them and then centered and scaled them. Next, we performed multiple linear regression with &quot;displaced&quot; as dependent variable and other three variables as independent variables. This model seems to explain ~19% of number of people displaced.</p>
+
 <pre><code>     1 .  regress std_log_displaced severity std_log_affected std_log_duration
       
             Source |       SS       df       MS              Number of obs =    3034
@@ -173,7 +175,7 @@ $(document).ready(function () {
       
       
       </code></pre>
-<p>Check assumptions of linear regression:</p>
+<p>Next, we proceeded to check if the assumptions for linear regression hold:</p>
 <ul>
 <li>Assumption of normality of residuals appears satisfied.</li>
 </ul>
@@ -345,15 +347,13 @@ $(document).ready(function () {
 <img src="./hk/img/Linearity_pc1.png" />
 
 </div>
-<h3 id="visually-assess-relationship-between-multiple-flood-characteristics-and-displaced">5. Visually assess relationship between multiple flood characteristics and # displaced</h3>
-<p>Such a visualization would be difficult to perform with traditional linear regression in the pr esence of multiple independent variables.</p>
+Finally, we visually assessed the relationship between multiple flood characteristics and the number of people displaced. Such a visualization would be difficult to perform with traditional linear regression in the presence of multiple independent variables.</p>
 <div class="figure">
 <img src="./hk/img/Scatter.png" />
 
 </div>
-<h3 id="summmary">6. Summmary</h3>
-<p>Principal components analysis allowed dimension reduction to one dimension, thereby allowing di rect visualization.</p>
-<p>Prediction using one principal component was equally predictive as regression limited to one tr aditional independent variable and additionally allowed direct visualization between predictor and outcome. However, the disad vantage of this approach is that the first principal component is more difficult to conceptually understand than a traditional p redictor such as severity.</p>
+
+Principal components analysis allowed dimension reduction to one dimension, thereby allowing direct visualization. Prediction using one principal component was equally predictive as regression limited to one tr aditional independent variable and additionally allowed direct visualization between predictor and outcome. However, the disad vantage of this approach is that the first principal component is more difficult to conceptually understand than a traditional p redictor such as severity.
 
 <!-- END OF HOOMAN'S CODE -->
 
